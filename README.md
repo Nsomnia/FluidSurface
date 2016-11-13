@@ -14,6 +14,8 @@ Installation
 Version History
 ---------------
 
+__0.1.4__ Update for 4.13.2 based on gustwinds modifications who updated the shaders for 4.11. Updated the shaders and source to compile but un-tested in-editor and packaged. Use at your own discretion.
+
 __0.1.3__ Update for 4.10 base on DamirH's modification
 
 __0.1.2__ Update for 4.8

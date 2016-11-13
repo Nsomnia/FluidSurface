@@ -28,7 +28,7 @@ AFluidSurfaceModifier::AFluidSurfaceModifier(const class FObjectInitializer& Obj
 			static FConstructorStatics ConstructorStatics;
 
 			SpriteComponent->Sprite = ConstructorStatics.TextRenderTexture.Get( );
-			SpriteComponent->AttachParent = SceneComponent;
+			SpriteComponent->AttachToComponent(SceneComponent, FAttachmentTransformRules::SnapToTargetIncludingScale); // NOTE Nsomnia: AttachParent = SceneComponent replaced with AttachToComponent(SceneComponent, FAttachmentTransformRules). 4.13 made SceneComponent AttachParent and AttachSocketName private. Same modification done in FluidSurfaceOsscilator.cpp line 18. Should work, fixes privatization and deprecation of AttachTo. Will have to play with the FAttachmentTransformRules to ensure it works properly, just guessing on this one.
 			SpriteComponent->bIsScreenSizeScaled = true;
 			SpriteComponent->bAbsoluteScale = true;
 			SpriteComponent->bReceivesDecals = false;

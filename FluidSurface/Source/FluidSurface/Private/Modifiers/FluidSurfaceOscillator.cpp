@@ -15,7 +15,7 @@ AFluidSurfaceOscillator::AFluidSurfaceOscillator( const class FObjectInitializer
 	{
 		if( RadiusComponent != nullptr )
 		{
-			RadiusComponent->AttachParent = SceneComponent;
+			RadiusComponent->AttachToComponent(SceneComponent, FAttachmentTransformRules::SnapToTargetIncludingScale); //NOTE Nsomnia: AttachParent = SceneComponent replaced with AttachToComponent(SceneComponent, FAttachmentTransformRules). 4.13 made SceneComponent AttachParent and AttachSocketName private. Same modification done in FluidSurfaceModifier.cpp line 31. Should work, fixes privatization and deprecation of AttachTo. Will have to play with the FAttachmentTransformRules to ensure it works properly, just guessing on this one.
 			RadiusComponent->SetSphereRadius( Radius );
 		}
 	}

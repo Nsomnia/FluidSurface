@@ -2,12 +2,12 @@
     "PluginFileVersion" : 3,
 	
 	"FriendlyName" : "Fluid Surface Actor",
-	"Version" : 10,
-	"VersionName" : "0.1.3",
+	"Version" : 9,
+	"VersionName" : "0.1.4",
 	"CreatedBy" : "Ehamloptiran",
 	"CreatedByURL" : "galaxyeham@gmail.com",
-	"EngineVersion" : "4.10.0",
-	"Description" : "Simulated fluid surface actor",
+	"EngineVersion" : "4.13.2",
+	"Description" : "Simulated fluid surface actor, modified by Nsomnia Nov13/16",
 	"Category" : "Rendering",
 	"EnabledByDefault" : true,
 	

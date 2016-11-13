@@ -1,8 +1,8 @@
 
 #include "FluidSurfacePrivatePCH.h"
-
-#include "TessellationRendering.h"
 #include "PhysicsEngine/BodySetup.h"
+#include "TessellationRendering.h"
+
 
 /** Render Data */
 
@@ -49,6 +49,11 @@ void FFluidSurfaceRenderData::InitResources( UFluidSurfaceComponent* Component )
 	FluidTextureResource = RHICreateTexture2D( Component->FluidXSize, Component->FluidYSize, PF_A32B32G32R32F, 1, 1, TexCreate_ShaderResource | TexCreate_UAV, CreateInfo );
 
 	FluidTextureUAV = RHICreateUnorderedAccessView( FluidTextureResource );
+	bVertexInitialized = false;
+
+	CachedComponent = Component;
+	UE_LOG(LogTemp, Log, TEXT("Old vertex buffer init..."));
+
 
 	ENQUEUE_UNIQUE_RENDER_COMMAND_FOURPARAMETER(
 		FInitializeFluidVertexBuffers,
@@ -57,13 +62,25 @@ void FFluidSurfaceRenderData::InitResources( UFluidSurfaceComponent* Component )
 		FReadBufferStructured&, FluidPLingBuffer, FluidPLingBuffer,
 		UFluidSurfaceComponent*, Component, Component,
 		{
-			/* Intialise fluid buffers */
 			FluidVerts0.Initialize(sizeof(float), Component->FluidXSize * Component->FluidYSize, PF_R32_FLOAT);
 			FluidVerts1.Initialize(sizeof(float), Component->FluidXSize * Component->FluidYSize, PF_R32_FLOAT);
 
-			/* Initialise buffer for storing Plings */
 			FluidPLingBuffer.Initialize(sizeof(FFluidSurfacePLingParameters), MAX_FLUID_PLINGS, BUF_Volatile);
 		});
+	
+}
+
+void FFluidSurfaceRenderData::InitVertexBuffer_RenderThread()
+{
+	if (bVertexInitialized) return;
+	
+	UE_LOG(LogTemp, Log, TEXT("New vertex buffer init..."));
+	FluidVerts0.Initialize(sizeof(float), CachedComponent->FluidXSize * CachedComponent->FluidYSize, PF_R32_FLOAT);
+	FluidVerts1.Initialize(sizeof(float), CachedComponent->FluidXSize * CachedComponent->FluidYSize, PF_R32_FLOAT);
+
+	FluidPLingBuffer.Initialize(sizeof(FFluidSurfacePLingParameters), MAX_FLUID_PLINGS, BUF_Volatile);
+
+	bVertexInitialized = true;
 }
 
 /** Release render resources */
@@ -602,7 +619,7 @@ FFluidSurfaceSceneProxy::~FFluidSurfaceSceneProxy( )
 }
 
 /** Returns the view revelance */
-FPrimitiveViewRelevance FFluidSurfaceSceneProxy::GetViewRelevance( const FSceneView* View )
+FPrimitiveViewRelevance FFluidSurfaceSceneProxy::GetViewRelevance( const FSceneView* View ) const
 {
 	FPrimitiveViewRelevance Result;
 	Result.bDrawRelevance = IsShown( View );
@@ -871,6 +888,11 @@ void FFluidSurfaceSceneProxy::SetDynamicData_RenderThread( FFluidSurfaceDynamicD
 	Time += DynamicData->DeltaTime;
 	if( Time > 32767.0f )
 		Time = 0.0f;
+
+	if (RenderData != nullptr)
+	{
+		//RenderData->InitVertexBuffer_RenderThread();
+	}
 
 	/* Execute the compute shader */
 	ExecComputeShader( );

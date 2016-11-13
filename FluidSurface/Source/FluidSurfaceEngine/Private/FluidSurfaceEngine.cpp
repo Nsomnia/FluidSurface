@@ -199,5 +199,4 @@ IMPLEMENT_SHADER_TYPE( , FFluidSurfaceCS, TEXT( "FluidSurfaceShader" ), TEXT( "C
 /** Fluid Surface triangles stat */
 DEFINE_STAT( STAT_FluidSurfaceTriangles );
 
-class FFluidSurfaceEngine : public FDefaultModuleImpl {};
-IMPLEMENT_MODULE(FFluidSurfaceEngine, FluidSurfaceEngine)
+IMPLEMENT_MODULE( FDefaultModuleImpl, FluidSurfaceEngine )

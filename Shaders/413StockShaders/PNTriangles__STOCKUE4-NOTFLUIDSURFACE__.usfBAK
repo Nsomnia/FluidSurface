@@ -1,9 +1,7 @@
 // Copyright 1998-2016 Epic Games, Inc. All Rights Reserved.
 
 /*=============================================================================
-	PNTriangles.usf: Shader fragments for PN-AEN triangles tessellation.
-	
-	Last edited by Nsomnia Nov 13, 2016 by diffing the files from fluidSurface 4.12 and stock 4.13.2 and leaving the #IF_USING_FLUIDSURFACE part in
+	PNTriangles.usf: Shader fragments for PN-AEN triangles tessellation
 =============================================================================*/
 
 #define IN_CONTROL_POINTS 12
@@ -177,7 +175,7 @@ float4 ComputeControlPoint(float4 PositionA, float4 PositionB, float4 NormalA)
 #endif
 #if INSTANCED_STEREO && !MULTI_VIEW
 		, out float OutClipDistance : SV_ClipDistance1
-
+		
 #endif
 		)
 	{
@@ -238,7 +236,7 @@ float4 ComputeControlPoint(float4 PositionA, float4 PositionB, float4 NormalA)
 		#endif
 
 		// get our base material params that we will potentially override
-
+		
 		FMaterialTessellationParameters MaterialParameters = GetMaterialTessellationParameters(Interp.FactoryInterpolants, WorldPosition.xyz); // VF ops
 
 #if DISPLACEMENT_ANTICRACK
@@ -275,11 +273,6 @@ float4 ComputeControlPoint(float4 PositionA, float4 PositionB, float4 NormalA)
 		// tangent space displacement scaling
 		DisplacementMaterialParameters.TangentToWorldPreScale = I[0].DisplacementScale*U + I[1].DisplacementScale*V + I[2].DisplacementScale*W;
 
-#if USE_FLUIDSURFACE
-		// Apply fluid surface displacement before material displacement
-		float3 FluidDisplacement = VertexFactoryGetWorldDisplacement(GetTextureCoordinateDS( Interp ));
-		WorldPosition.xyz += FluidDisplacement;
-#endif
 		// world space displacement value.  This will likely use the tangent2world transform.
 		float3 WorldDisplacement = GetMaterialWorldDisplacement(DisplacementMaterialParameters);
 		WorldPosition.xyz += WorldDisplacement;
@@ -287,11 +280,11 @@ float4 ComputeControlPoint(float4 PositionA, float4 PositionB, float4 NormalA)
 		#if USE_GLOBAL_CLIP_PLANE
 			OutGlobalClipPlaneDistance = dot(ResolvedView.GlobalClippingPlane, float4(WorldPosition.xyz - ResolvedView.PreViewTranslation.xyz, 1));
 		#endif
-	
+
 		FPassSpecificVSToPS Result = PassFinalizeTessellationOutput(Interp, WorldPosition, MaterialParameters);
 
 		#if INSTANCED_STEREO && !MULTI_VIEW
-
+		
 		BRANCH
 		if (IsInstancedStereo(I[0].PassSpecificData.FactoryInterpolants.InterpolantsVSToPS.PackedEyeIndex))
 		{

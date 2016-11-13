@@ -1,10 +1,15 @@
+/*
+* FluidSurface 4.11.x fork of gustwind's from HamirHalilovic from marynate (root) from GitHub
+* Fixed for 4.13.2 by Nsomnia on Nov 13, 2016
+* NOTE Nsomnia: is added to any line where changes were made
+* Hope it works, any help would be greatly appreciated.
+*/
 
 #include "FluidSurfacePrivatePCH.h"
 #include "FluidSurfaceRender.h"
-
+#include "PhysicsEngine/BodySetup.h"
 #include "Particles/Emitter.h"
 #include "Particles/ParticleSystemComponent.h"
-#include "PhysicsEngine/BodySetup.h"
 
 const double MyU2Rad = ( double ) 0.000095875262;
 
@@ -146,11 +151,25 @@ void UFluidSurfaceComponent::Init( )
 
 	PLingBuffer.SetNumUninitialized(MAX_FLUID_PLINGS);
 	NumPLing = 0;
+
+	if( RenderData )
+	{
+		RenderData->ReleaseResources( );
+		RenderData = NULL;
+	}
+	
+	/* Create render data */
+	RenderData = new FFluidSurfaceRenderData( );
+	RenderData->InitResources( this );
+
 }
 
 /** Pling */
 void UFluidSurfaceComponent::Pling( const FVector& Position, float Strength, float Radius )
 {
+	if (NumPLing >= MAX_FLUID_PLINGS)
+		return;
+
 	int HitX, HitY;
 	GetNearestIndex( Position, HitX, HitY );
 
@@ -216,23 +235,16 @@ void UFluidSurfaceComponent::OnRegister( )
 
 void UFluidSurfaceComponent::CreateRenderState_Concurrent()
 {
-	/* Create render data */
-	RenderData = new FFluidSurfaceRenderData();
-	RenderData->InitResources(this);
-
 	Super::CreateRenderState_Concurrent();
-}
-
-void UFluidSurfaceComponent::DestroyRenderState_Concurrent()
-{
-	Super::DestroyRenderState_Concurrent();
-
-	if (RenderData)
+	/*if (RenderData)
 	{
 		RenderData->ReleaseResources();
-		//BeginCleanup(RenderData);
 		RenderData = NULL;
 	}
+
+	/* Create render data */
+	/*RenderData = new FFluidSurfaceRenderData();
+	RenderData->InitResources(this);*/
 }
 
 /** Tick */
@@ -269,7 +281,7 @@ void UFluidSurfaceComponent::TickComponent( float DeltaTime, enum ELevelTick Tic
 		CollisionShape.SetBox( FluidBoundingBox.GetExtent( ) );
 
 		/* Find overlapping actors */
-		GetWorld()->OverlapMultiByChannel(OverlappingActors, GetComponentLocation(), GetComponentQuat(), ECC_WorldDynamic, CollisionShape, FCollisionQueryParams(false));
+		GetWorld()->OverlapMultiByChannel(OverlappingActors, GetComponentLocation(), GetComponentQuat(), ECC_WorldDynamic, CollisionShape, FCollisionQueryParams(FName(NAME_Actor), false)); // NOTE Nsomnia: Added a FName for Actor to try to fix deprecation for "ambiguous uses of FCollisionQueryParam constructor". Seems to have fixed it, but if its working, we'll see.
 
 		// @todo: handle better
 
@@ -339,12 +351,12 @@ void UFluidSurfaceComponent::ReceiveComponentDamage( float DamageAmount, FDamage
 		/* Spawn shoot effect emitter */
 		FRotator Rotation = FRotator( 0, 0, 0 );
 		AEmitter* Emitter = GetWorld( )->SpawnActor<AEmitter>( HitLocation, Rotation );
-		Emitter->ParticleSystemComponent->SetTemplate( ShootEffect );
+		Emitter->GetParticleSystemComponent()->SetTemplate(ShootEffect); // NOTE Nsomnia: GetParticlesSystemComponent() is replacing ParticleSystemComponent, simple replace I hope? Same as line 371
 	}
 }
 
 /** Called when an object has overlapped this component */
-void UFluidSurfaceComponent::ComponentTouched( AActor* Other, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult )
+void UFluidSurfaceComponent::ComponentTouched(class UPrimitiveComponent* HitComp, AActor* Other, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult )
 {
 	if( !Other )
 		return;
@@ -356,7 +368,7 @@ void UFluidSurfaceComponent::ComponentTouched( AActor* Other, UPrimitiveComponen
 		/* Spawn touch effect emitter */
 		FRotator Rotation = FRotator( 0, 0, 0 );
 		AEmitter* Emitter = GetWorld( )->SpawnActor<AEmitter>( ActorLocation, Rotation );
-		Emitter->ParticleSystemComponent->SetTemplate( TouchEffect );
+		Emitter->GetParticleSystemComponent()->SetTemplate(TouchEffect); // NOTE Nsomnia: GetParticlesSystemComponent is replacing ParticleSystemComponent, simple replace I hope? Same as line 354
 	}
 }
 
@@ -444,6 +456,8 @@ FColor UFluidSurfaceComponent::GetWireframeColor( ) const
 void UFluidSurfaceComponent::BeginDestroy( )
 {
 	Super::BeginDestroy( );
+	if( RenderData )
+		RenderData->ReleaseResources( );
 }
 
 void UFluidSurfaceComponent::CreatePhysicsState( )
@@ -455,7 +469,7 @@ void UFluidSurfaceComponent::CreatePhysicsState( )
 	UpdateBody( );
 #endif
 
-	return Super::CreatePhysicsState( );
+	CreatePhysicsState(); // NOTE Nsomnia: Was Super:: Removing call even though UMeshComponent inherits from UPrimitiveComponent which has that method, need help/investigation
 }
 
 UBodySetup* UFluidSurfaceComponent::GetBodySetup( )

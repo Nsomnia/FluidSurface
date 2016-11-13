@@ -1,9 +1,16 @@
+/* 
+ * FluidSurface 4.11.x fork of gustwind's from HamirHalilovic from marynate (root) from GitHub
+ * Fixed for 4.13.2 by Nsomnia on Nov 13, 2016 
+ * NOTE Nsomnia: is added to any line where changes were made
+ * Hope it works, any help would be greatly appreciated.
+*/
+
 
 #pragma once
 
 #include "FluidSurfaceComponent.generated.h"
 
-#define ROOT3OVER2			(0.866025f)
+#define ROOT3OVER2			(0.1866025f)
 #define FLUIDBOXHEIGHT		(5)
 
 UENUM( )
@@ -47,7 +54,12 @@ class UFluidSurfaceComponent : public UMeshComponent
 	virtual FPrimitiveSceneProxy* CreateSceneProxy( ) override;
 	virtual class UBodySetup* GetBodySetup( ) override;
 	virtual void ReceiveComponentDamage( float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser ) override;
-	virtual void CreatePhysicsState( ) override;
+	virtual void CreatePhysicsState(); // NOTE Nsomnia: Was a virtual override function but was not calling the UPrimitiveComponent::CreatePhysicsState() super for some reason? Not versed enough to fix properly
+			/* 
+			 * Note Nsomnia: The above was causing issues, it SHOULD be calling UPrimitiveComponent::CreatePhysicsState() and FluidSurfaceComponent inherits
+			 * from UMeshComponent which itself inherits from UPrimitiveComponent so we just need someway to call a Super:: on the base class (primitiveComp)
+			 * I dont know enough for this kind've stuff will do some testing to see if it works, it should in-editor at least.
+			 */
 	/* End UPrimitiveComponent interface*/
 
 	/* Begin UMeshComponent interface */
@@ -61,10 +73,9 @@ class UFluidSurfaceComponent : public UMeshComponent
 
 	/* Begin UActorComponent interface */
 	virtual void OnRegister( ) override;
-	virtual void CreateRenderState_Concurrent() override;
+	virtual void TickComponent( float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction *ThisTickFunction ) override;
 	virtual void SendRenderDynamicData_Concurrent( ) override;
-	virtual void DestroyRenderState_Concurrent() override;
-	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction *ThisTickFunction) override;
+	virtual void CreateRenderState_Concurrent() override;
 	/* End UActorComponent interface */
 
 	/* Begin UObject interace */
@@ -77,7 +88,7 @@ class UFluidSurfaceComponent : public UMeshComponent
 
 	/* Delegates */
 	UFUNCTION( )
-	void ComponentTouched( AActor* Other, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult );
+	void ComponentTouched(class UPrimitiveComponent* HitComp, AActor* Other, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult ); // NOTE Nsomnia: 4.12 added a requirement for a first parameter of class UPrimitiveComponent* HitComp,
 
 	/** Color to use when displayed in wireframe */
 	FColor GetWireframeColor( ) const;
